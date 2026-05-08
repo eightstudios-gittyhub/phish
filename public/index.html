@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Phishing Awareness Lab</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #172033;
+      background: linear-gradient(135deg, #eaf2ff 0%, #f8fbff 48%, #fff6e8 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    main {
+      width: min(920px, 100%);
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid #d7e2f0;
+      border-radius: 24px;
+      box-shadow: 0 20px 70px rgba(31, 45, 61, 0.12);
+      padding: 32px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      background: #e8f5ef;
+      color: #12613d;
+      font-weight: 700;
+      padding: 8px 14px;
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    h1 { margin: 0 0 12px; font-size: clamp(32px, 5vw, 54px); line-height: 1; }
+    h2 { margin: 0 0 16px; font-size: 24px; }
+    p { color: #4d5c70; line-height: 1.6; }
+
+    ul { padding-left: 20px; color: #334155; line-height: 1.7; }
+    li::marker { color: #276ef1; }
+
+    form { display: grid; gap: 16px; }
+    label { display: grid; gap: 8px; font-weight: 700; color: #26364d; }
+
+    input {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 13px 14px;
+      font-size: 16px;
+      background: #fff;
+    }
+
+    input:focus {
+      border-color: #276ef1;
+      box-shadow: 0 0 0 4px rgba(39, 110, 241, 0.12);
+      outline: none;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      background: #276ef1;
+      color: #fff;
+      padding: 14px 18px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:hover { background: #1f5ecf; }
+
+    .warning {
+      border-left: 4px solid #f59e0b;
+      background: #fff7ed;
+      border-radius: 14px;
+      padding: 14px 16px;
+      color: #7c2d12;
+      font-weight: 700;
+    }
+
+    .result {
+      display: none;
+      border-radius: 14px;
+      background: #ecfdf3;
+      color: #14532d;
+      padding: 14px 16px;
+      font-weight: 700;
+    }
+
+    .small { font-size: 13px; color: #667085; margin: 0; }
+
+    @media (max-width: 760px) {
+      main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <div class="badge">🛡️ Safe defender module</div>
+      <h1>Phishing Awareness Lab</h1>
+      <p>
+        Practice spotting suspicious login flows without copying a real brand or collecting
+        real credentials. This demo accepts a training identifier, immediately discards the
+        password field, and explains what defenders should inspect.
+      </p>
+      <div class="warning">
+        Educational use only: do not enter a real password. The server is designed to discard it.
+      </div>
+      <h2 style="margin-top: 28px;">Defender checklist</h2>
+      <ul>
+        <li>Verify the URL and domain before entering sensitive information.</li>
+        <li>Use a password manager; it usually will not autofill on look-alike domains.</li>
+        <li>Report suspicious pages to your security team instead of interacting further.</li>
+        <li>Prefer phishing-resistant MFA such as security keys or passkeys.</li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>Run the safe demo</h2>
+      <p class="small">Use a fake identifier such as learner@example.test.</p>
+      <form id="demoForm">
+        <label>
+          Training identifier
+          <input id="email" name="email" type="email" placeholder="learner@example.test" autocomplete="off" required />
+        </label>
+        <label>
+          Demo password
+          <input id="password" name="password" type="password" placeholder="Do not use a real password" autocomplete="off" required />
+        </label>
+        <button type="submit">Submit safe demo</button>
+      </form>
+      <p id="result" class="result">✅ Demo submitted. No password was collected or stored.</p>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('demoForm');
+    const result = document.getElementById('result');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const passwordLength = document.getElementById('password').value.length;
+
+      if (!email || passwordLength === 0) {
+        return;
+      }
+
+      await fetch('/report-demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, passwordLength }),
+      });
+
+      form.reset();
+      result.style.display = 'block';
+    });
+  </script>
+</body>
+</html>

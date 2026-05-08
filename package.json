@@ -1,0 +1,12 @@
+{
+  "name": "phish-lab",
+  "version": "1.0.0",
+  "description": "Cybersecurity education phishing awareness lab with safe credential-handling behavior",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
