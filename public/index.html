@@ -5,175 +5,490 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Phishing Awareness Lab</title>
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --bg: #070b16;
+      --surface: rgba(17, 24, 39, 0.88);
+      --surface2: rgba(30, 41, 59, 0.86);
+      --border: rgba(148, 163, 184, 0.18);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #00d4ff;
+      --accent2: #ff4560;
+      --accent3: #00e676;
+      --warn: #fbbf24;
+      --font-display: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      margin: 0;
+      background: radial-gradient(circle at top left, rgba(0, 212, 255, 0.14), transparent 28%), var(--bg);
+      color: var(--text);
+      font-family: var(--font-display);
       min-height: 100vh;
-      font-family: Arial, Helvetica, sans-serif;
-      color: #172033;
-      background: linear-gradient(135deg, #eaf2ff 0%, #f8fbff 48%, #fff6e8 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
+      overflow-x: hidden;
     }
 
-    main {
-      width: min(920px, 100%);
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 24px;
-      align-items: stretch;
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
     }
 
-    .panel {
-      background: rgba(255, 255, 255, 0.92);
-      border: 1px solid #d7e2f0;
-      border-radius: 24px;
-      box-shadow: 0 20px 70px rgba(31, 45, 61, 0.12);
-      padding: 32px;
-    }
+    .wrap { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
+    .header { text-align: center; margin-bottom: 56px; animation: fadeDown 0.6s ease both; }
+    .badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 212, 255, 0.08); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 999px; padding: 6px 16px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); font-family: var(--font-mono); margin-bottom: 20px; }
+    .badge::before { content: '⬡'; font-size: 14px; }
+    h1 { font-size: clamp(32px, 6vw, 56px); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; background: linear-gradient(135deg, #fff 30%, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 16px; }
+    .header p { color: var(--muted); font-size: 16px; max-width: 620px; margin: 0 auto; line-height: 1.6; }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border-radius: 999px;
-      background: #e8f5ef;
-      color: #12613d;
-      font-weight: 700;
-      padding: 8px 14px;
-      font-size: 14px;
-      margin-bottom: 18px;
-    }
+    .progress-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; animation: fadeUp 0.6s 0.1s ease both; }
+    .progress-track { flex: 1; height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent3)); border-radius: 99px; transition: width 0.5s cubic-bezier(.4,0,.2,1); width: 0%; }
+    .progress-label { font-family: var(--font-mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
 
-    h1 { margin: 0 0 12px; font-size: clamp(32px, 5vw, 54px); line-height: 1; }
-    h2 { margin: 0 0 16px; font-size: 24px; }
-    p { color: #4d5c70; line-height: 1.6; }
+    .tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px; margin-bottom: 32px; animation: fadeUp 0.6s 0.15s ease both; }
+    .tab { flex: 1; padding: 10px 8px; border-radius: 8px; border: none; background: transparent; color: var(--muted); font-family: var(--font-display); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .tab.active { background: var(--surface2); color: var(--accent); border: 1px solid var(--border); }
+    .tab .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+    .tab.done .dot { background: var(--accent3); }
+    .tab.active .dot { background: var(--accent); }
 
-    ul { padding-left: 20px; color: #334155; line-height: 1.7; }
-    li::marker { color: #276ef1; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 24px; animation: fadeUp 0.5s ease both; }
+    .card-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+    .card h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .card p { color: var(--muted); font-size: 14px; line-height: 1.7; }
+    .module { display: none; }
+    .module.active { display: block; }
 
-    form { display: grid; gap: 16px; }
-    label { display: grid; gap: 8px; font-weight: 700; color: #26364d; }
+    .diff-row { display: flex; gap: 8px; margin-top: 16px; margin-bottom: 20px; }
+    .diff-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: var(--font-mono); font-size: 11px; cursor: pointer; transition: all 0.2s; }
+    .diff-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0, 212, 255, 0.06); }
 
-    input {
-      width: 100%;
-      border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      padding: 13px 14px;
-      font-size: 16px;
-      background: #fff;
-    }
+    .browser-chrome { background: #1e2535; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
+    .browser-bar { background: #161c2d; padding: 10px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+    .browser-dots { display: flex; gap: 6px; }
+    .browser-dots span { width: 10px; height: 10px; border-radius: 50%; }
+    .browser-dots span:nth-child(1) { background: #ff5f57; }
+    .browser-dots span:nth-child(2) { background: #febc2e; }
+    .browser-dots span:nth-child(3) { background: #28c840; }
+    .url-bar { flex: 1; min-width: 0; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-family: var(--font-mono); font-size: 12px; color: var(--accent2); display: flex; align-items: center; gap: 8px; overflow-wrap: anywhere; }
+    .url-bar .lock { color: var(--accent2); font-size: 11px; }
+    .browser-content { background: #fff; padding: 40px 30px; color: #202124; }
+    .brand-logo { text-align: center; margin-bottom: 20px; font-size: 34px; font-weight: 800; letter-spacing: -0.04em; color: #2563eb; }
+    .brand-logo span:nth-child(2) { color: #ef4444; }
+    .brand-logo span:nth-child(3) { color: #f59e0b; }
+    .brand-logo span:nth-child(4) { color: #16a34a; }
+    .login-card { max-width: 380px; margin: 0 auto; }
+    .login-card h3 { color: #202124; font-size: 22px; font-weight: 500; text-align: center; margin-bottom: 6px; }
+    .login-card .sub { color: #5f6368; font-size: 14px; text-align: center; margin-bottom: 28px; }
+    .input-wrap { position: relative; margin-bottom: 20px; }
+    .input-wrap label { position: absolute; top: -9px; left: 10px; background: #fff; padding: 0 4px; font-size: 11px; color: #2563eb; }
+    .input-wrap input { width: 100%; padding: 12px 14px; border: 1px solid #dadce0; border-radius: 4px; font-size: 15px; color: #202124; outline: none; }
+    .input-wrap input:focus { border-color: #2563eb; border-width: 2px; }
+    .login-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; }
+    .login-link { color: #2563eb; font-size: 14px; text-decoration: none; }
+    .login-btn { background: #2563eb; color: #fff; border: none; border-radius: 4px; padding: 10px 22px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    #login-step2 { display: none; }
+    .avatar-row { display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #dadce0; border-radius: 20px; padding: 6px 16px; width: fit-content; margin: 0 auto 24px; font-size: 13px; color: #202124; }
+    .avatar { width: 26px; height: 26px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
 
-    input:focus {
-      border-color: #276ef1;
-      box-shadow: 0 0 0 4px rgba(39, 110, 241, 0.12);
-      outline: none;
-    }
+    .terminal { background: #0d1117; border: 1px solid var(--accent); border-radius: 10px; padding: 20px; font-family: var(--font-mono); font-size: 13px; display: none; animation: fadeUp 0.4s ease both; margin-bottom: 24px; }
+    .terminal.show { display: block; }
+    .terminal .t-line { margin-bottom: 4px; }
+    .terminal .t-border { color: var(--accent); }
+    .terminal .t-label { color: var(--muted); }
+    .terminal .t-val { color: var(--accent3); }
+    .terminal .t-warn { color: var(--warn); margin-top: 12px; }
 
-    button {
-      border: 0;
-      border-radius: 12px;
-      background: #276ef1;
-      color: #fff;
-      padding: 14px 18px;
-      font-size: 16px;
-      font-weight: 800;
-      cursor: pointer;
-    }
+    .flags-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 24px; }
+    .flag-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; opacity: 0; transform: translateY(12px); transition: opacity 0.4s, transform 0.4s; }
+    .flag-card.visible, .module.active .flag-card { opacity: 1; transform: translateY(0); }
+    .flag-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--accent2); }
+    .flag-card.safe::before { background: var(--accent3); }
+    .flag-card.warn::before { background: var(--warn); }
+    .flag-icon { font-size: 22px; margin-bottom: 10px; }
+    .flag-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+    .flag-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
 
-    button:hover { background: #1f5ecf; }
+    .email-client { background: #1a1a2e; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
+    .email-header-bar { background: #16213e; padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+    .email-body { padding: 24px; }
+    .email-meta { margin-bottom: 20px; }
+    .em-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+    .em-key { color: var(--muted); min-width: 58px; }
+    .em-val.suspicious { color: var(--accent2); font-family: var(--font-mono); cursor: pointer; overflow-wrap: anywhere; }
+    .email-subject { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+    .email-content { background: var(--surface2); border-radius: 8px; padding: 20px; font-size: 14px; line-height: 1.8; color: var(--text); }
+    .highlight { background: rgba(255, 69, 96, 0.15); border-bottom: 1px dashed var(--accent2); cursor: pointer; padding: 1px 2px; border-radius: 2px; }
+    .tooltip-box { background: #1e0a12; border: 1px solid var(--accent2); border-radius: 8px; padding: 12px 16px; font-size: 12px; color: var(--text); margin-top: 8px; display: none; line-height: 1.6; }
+    .tooltip-box.show { display: block; }
 
-    .warning {
-      border-left: 4px solid #f59e0b;
-      background: #fff7ed;
-      border-radius: 14px;
-      padding: 14px 16px;
-      color: #7c2d12;
-      font-weight: 700;
-    }
+    .phone-wrap, .qr-scene, .score-ring-wrap { display: flex; justify-content: center; margin-bottom: 24px; }
+    .phone { width: 300px; background: #111; border-radius: 36px; padding: 16px; border: 6px solid #222; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); }
+    .phone-screen { background: #000; border-radius: 24px; overflow: hidden; }
+    .phone-status { padding: 8px 16px; display: flex; justify-content: space-between; font-size: 11px; color: #fff; }
+    .sms-header { background: #1c1c1e; padding: 12px 16px; text-align: center; border-bottom: 1px solid #333; }
+    .sms-from { font-size: 11px; color: #8e8e93; }
+    .sms-name { font-size: 15px; font-weight: 600; color: #fff; }
+    .sms-messages { padding: 16px; min-height: 200px; }
+    .sms-bubble { background: #1c1c1e; border-radius: 18px 18px 18px 4px; padding: 10px 14px; font-size: 13px; color: #fff; max-width: 240px; line-height: 1.5; margin-bottom: 8px; }
+    .sms-bubble a { color: #0a84ff; }
+    .sms-time { font-size: 10px; color: #636366; margin-top: 4px; }
 
-    .result {
-      display: none;
-      border-radius: 14px;
-      background: #ecfdf3;
-      color: #14532d;
-      padding: 14px 16px;
-      font-weight: 700;
-    }
+    .qr-poster { background: white; border-radius: 12px; padding: 24px; width: 220px; text-align: center; box-shadow: 0 8px 40px rgba(0,0,0,0.4); }
+    .qr-title { font-size: 13px; color: #333; font-weight: 700; margin-bottom: 12px; }
+    .qr-code { width: 140px; height: 140px; margin: 0 auto 12px; background: #000; border-radius: 4px; display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px; gap: 2px; }
+    .qr-pixel { border-radius: 1px; }
+    .qr-pixel.on { background: #000; }
+    .qr-pixel.off { background: #fff; }
+    .qr-sub { font-size: 11px; color: #666; }
 
-    .small { font-size: 13px; color: #667085; margin: 0; }
+    .quiz-q { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    .q-text { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+    .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+    .quiz-opt { background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; text-align: left; color: var(--text); font-family: var(--font-display); font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
+    .quiz-opt:hover:not(:disabled) { border-color: var(--accent); background: rgba(0, 212, 255, 0.05); }
+    .quiz-opt.correct { border-color: var(--accent3); background: rgba(0, 230, 118, 0.08); color: var(--accent3); }
+    .quiz-opt.wrong { border-color: var(--accent2); background: rgba(255, 69, 96, 0.08); color: var(--accent2); }
+    .opt-letter { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .quiz-feedback { margin-top: 12px; font-size: 13px; padding: 10px 14px; border-radius: 8px; display: none; }
+    .quiz-feedback.show { display: block; }
+    .quiz-feedback.ok { background: rgba(0, 230, 118, 0.1); color: var(--accent3); border: 1px solid rgba(0, 230, 118, 0.2); }
+    .quiz-feedback.bad { background: rgba(255, 69, 96, 0.1); color: var(--accent2); border: 1px solid rgba(255, 69, 96, 0.2); }
 
-    @media (max-width: 760px) {
-      main { grid-template-columns: 1fr; }
-    }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 8px; border: none; font-family: var(--font-display); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: var(--accent); color: #0a0e1a; }
+    .btn-primary:hover { background: #00b8d9; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3); }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+
+    .score-ring { position: relative; width: 140px; height: 140px; }
+    .score-ring svg { transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+    .ring-fill { fill: none; stroke: var(--accent3); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 339.3; stroke-dashoffset: 339.3; transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
+    .score-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .score-num { font-size: 32px; font-weight: 800; color: var(--accent3); font-family: var(--font-mono); line-height: 1; }
+    .score-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+    .stat-val { font-size: 24px; font-weight: 800; font-family: var(--font-mono); color: var(--accent); }
+    .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .lb-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 10px; margin-bottom: 8px; background: var(--surface2); border: 1px solid var(--border); }
+    .lb-row.you { border-color: var(--accent); background: rgba(0, 212, 255, 0.06); }
+    .lb-rank { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--muted); width: 24px; }
+    .lb-name { flex: 1; font-size: 14px; font-weight: 600; }
+    .lb-score { font-family: var(--font-mono); font-size: 14px; color: var(--accent3); font-weight: 700; }
+    .lb-time { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+    .completion-banner { display: none; text-align: center; padding: 48px 32px; background: linear-gradient(135deg, rgba(0,230,118,0.08), rgba(0,212,255,0.08)); border: 1px solid rgba(0,230,118,0.2); border-radius: 16px; margin-bottom: 24px; animation: fadeUp 0.5s ease both; }
+    .completion-banner.show { display: block; }
+    .big-emoji { font-size: 56px; margin-bottom: 16px; }
+    .completion-banner h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; color: var(--accent3); }
+
+    @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 600px) { .stats-row { grid-template-columns: 1fr; } .tabs { flex-wrap: wrap; } .tab { min-width: 45%; font-size: 11px; } .wrap { padding-inline: 16px; } .card { padding: 24px; } }
   </style>
 </head>
 <body>
-  <main>
-    <section class="panel">
-      <div class="badge">🛡️ Safe defender module</div>
+  <div class="wrap">
+    <header class="header">
+      <div class="badge">Safe defender simulation</div>
       <h1>Phishing Awareness Lab</h1>
-      <p>
-        Practice spotting suspicious login flows without copying a real brand or collecting
-        real credentials. This demo accepts a training identifier, immediately discards the
-        password field, and explains what defenders should inspect.
-      </p>
-      <div class="warning">
-        Educational use only: do not enter a real password. The server is designed to discard it.
+      <p>Practice recognizing phishing, smishing, and QR-code traps in a controlled lab that never stores or displays real passwords.</p>
+    </header>
+
+    <div class="progress-wrap" aria-label="Training progress">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">0 / 4 complete</div>
+    </div>
+
+    <nav class="tabs" aria-label="Training modules">
+      <button class="tab active" onclick="showModule(0)"><span class="dot"></span> Login</button>
+      <button class="tab" onclick="showModule(1)"><span class="dot"></span> Email</button>
+      <button class="tab" onclick="showModule(2)"><span class="dot"></span> SMS</button>
+      <button class="tab" onclick="showModule(3)"><span class="dot"></span> QR</button>
+      <button class="tab" onclick="showModule(4)"><span class="dot"></span> Score</button>
+    </nav>
+
+    <section class="module active" id="module-login">
+      <div class="card">
+        <div class="card-label">Module 1</div>
+        <h2>Look-alike login page</h2>
+        <p>This generic training page imitates the pressure of a credential prompt without copying a real service. Use a fake identifier and fake password only; the app sends only the identifier and password length to the server.</p>
+        <div class="diff-row">
+          <button class="diff-btn active" onclick="setDiff(this, 'easy')">Easy</button>
+          <button class="diff-btn" onclick="setDiff(this, 'medium')">Medium</button>
+          <button class="diff-btn" onclick="setDiff(this, 'hard')">Hard</button>
+        </div>
       </div>
-      <h2 style="margin-top: 28px;">Defender checklist</h2>
-      <ul>
-        <li>Verify the URL and domain before entering sensitive information.</li>
-        <li>Use a password manager; it usually will not autofill on look-alike domains.</li>
-        <li>Report suspicious pages to your security team instead of interacting further.</li>
-        <li>Prefer phishing-resistant MFA such as security keys or passkeys.</li>
-      </ul>
+
+      <div class="browser-chrome">
+        <div class="browser-bar">
+          <div class="browser-dots"><span></span><span></span><span></span></div>
+          <div class="url-bar" id="urlBar"><span class="lock" id="lockIcon">🔓</span><span id="urlText">http://accounts-cloud-secure.login-verify.example/signin</span></div>
+        </div>
+        <div class="browser-content">
+          <div class="login-card">
+            <div class="brand-logo" aria-label="Generic CloudSuite training brand"><span>C</span><span>l</span><span>o</span><span>u</span>dSuite</div>
+            <div id="login-step1">
+              <h3>Sign in</h3>
+              <p class="sub">Use your training account</p>
+              <div class="input-wrap"><label for="demo-email">Email or phone</label><input type="text" id="demo-email" autocomplete="off" /></div>
+              <div class="login-actions"><a href="#" class="login-link">Forgot email?</a><button class="login-btn" onclick="goPasswordStep()">Next</button></div>
+            </div>
+            <div id="login-step2">
+              <h3>Welcome</h3>
+              <div class="avatar-row"><div class="avatar" id="avatarLetter">?</div><span id="emailDisplay">learner@example.test</span><span style="color:#5f6368;">▾</span></div>
+              <div class="input-wrap"><label for="demo-password">Demo password</label><input type="password" id="demo-password" autocomplete="off" placeholder="Use a fake password" /></div>
+              <div class="login-actions"><a href="#" class="login-link">Forgot password?</a><button class="login-btn" onclick="submitSafeDemo()">Next</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="terminal" id="terminal">
+        <div class="t-line t-border">╔══════════════════════════════════════════╗</div>
+        <div class="t-line t-border">║       🎓 SAFE TRAINING SUBMISSION       ║</div>
+        <div class="t-line t-border">╠══════════════════════════════════════════╣</div>
+        <div class="t-line"><span class="t-border">║</span> <span class="t-label">📧 Identifier :</span> <span class="t-val" id="t-email">—</span></div>
+        <div class="t-line"><span class="t-border">║</span> <span class="t-label">🔐 Password   :</span> <span class="t-val">discarded by design</span></div>
+        <div class="t-line"><span class="t-border">║</span> <span class="t-label">📏 Length     :</span> <span class="t-val" id="t-length">—</span></div>
+        <div class="t-line"><span class="t-border">║</span> <span class="t-label">🕐 Time       :</span> <span class="t-val" id="t-time">—</span></div>
+        <div class="t-line t-border">╚══════════════════════════════════════════╝</div>
+        <div class="t-warn">⚠️ Real attacks steal secrets. This lab intentionally does not collect them.</div>
+      </div>
+
+      <div class="card" id="flagSection" style="display:none;">
+        <div class="card-label">Red flag analysis</div>
+        <h2>What gave it away?</h2>
+        <p>Review the clues before marking the module complete.</p>
+        <div class="flags-grid">
+          <div class="flag-card"><div class="flag-icon">🌐</div><div class="flag-title">Suspicious domain</div><div class="flag-desc">The real destination should be the organization's known domain. Here, the registrable domain is a look-alike training domain, not the expected provider.</div></div>
+          <div class="flag-card"><div class="flag-icon">🔓</div><div class="flag-title">Insecure scheme</div><div class="flag-desc">The page uses HTTP and an unlocked icon. Sensitive sign-ins should use HTTPS and still require domain verification.</div></div>
+          <div class="flag-card warn"><div class="flag-icon">🔤</div><div class="flag-title">Subdomain spoofing</div><div class="flag-desc">Attackers place trusted words at the beginning of a URL. Focus on the registrable domain immediately before the public suffix.</div></div>
+          <div class="flag-card safe"><div class="flag-icon">🛡️</div><div class="flag-title">Defensive habit</div><div class="flag-desc">Use a password manager and phishing-resistant MFA. Password managers usually refuse to fill credentials on the wrong domain.</div></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="completeModule(0)">✓ Mark Complete & Continue</button><button class="btn btn-ghost" onclick="resetLogin()">↺ Try Again</button></div>
+      </div>
     </section>
 
-    <section class="panel">
-      <h2>Run the safe demo</h2>
-      <p class="small">Use a fake identifier such as learner@example.test.</p>
-      <form id="demoForm">
-        <label>
-          Training identifier
-          <input id="email" name="email" type="email" placeholder="learner@example.test" autocomplete="off" required />
-        </label>
-        <label>
-          Demo password
-          <input id="password" name="password" type="password" placeholder="Do not use a real password" autocomplete="off" required />
-        </label>
-        <button type="submit">Submit safe demo</button>
-      </form>
-      <p id="result" class="result">✅ Demo submitted. No password was collected or stored.</p>
+    <section class="module" id="module-email">
+      <div class="email-client">
+        <div class="email-header-bar"><span>📬</span><strong>Inbox — learner@company.example</strong></div>
+        <div class="email-body">
+          <div class="email-meta">
+            <div class="em-row"><span class="em-key">From:</span><span class="em-val suspicious" onclick="showTip('from')">security-alert@cloudsuite-support.example ▸</span></div>
+            <div class="em-row"><span class="em-key">To:</span><span>learner@company.example</span></div>
+            <div class="em-row"><span class="em-key">Date:</span><span>Today, 2:47 AM</span></div>
+            <div class="em-row"><span class="em-key">Subject:</span><span>⚠️ Urgent: Your account will be suspended in 24 hours</span></div>
+          </div>
+          <div id="tip-from" class="tooltip-box">🚩 <strong>Fake sender domain:</strong> The email claims to be an account alert, but the sender is not the organization's normal domain.</div>
+          <div class="email-subject">⚠️ Urgent: Your account will be suspended in 24 hours</div>
+          <div class="email-content">
+            <p>Dear Valued User,</p><br />
+            <p>We detected <span class="highlight" onclick="showTip('unusual')">unusual sign-in activity</span>. Your account will be <span class="highlight" onclick="showTip('suspended')">permanently suspended within 24 hours</span> unless you verify immediately.</p><br />
+            <p>Please <span class="highlight" onclick="showTip('verify')">verify your account now →</span></p><br />
+            <p><span style="background:#2563eb; color:white; padding:8px 18px; border-radius:4px; font-size:13px; cursor:pointer;" onclick="showTip('button')">Verify My Account</span></p><br />
+            <p>Thank you,<br /><span class="highlight" onclick="showTip('signature')">The Account Security Team</span></p>
+          </div>
+          <div id="tip-unusual" class="tooltip-box">🚩 <strong>Vague threat:</strong> Real alerts usually include useful context like time, device, and location.</div>
+          <div id="tip-suspended" class="tooltip-box">🚩 <strong>Urgency and fear:</strong> Threats and tight deadlines are common social-engineering triggers.</div>
+          <div id="tip-verify" class="tooltip-box">🚩 <strong>Suspicious link:</strong> Navigate directly to the known site instead of clicking email links.</div>
+          <div id="tip-button" class="tooltip-box">🚩 <strong>Deceptive CTA:</strong> Buttons can display trusted text while pointing somewhere else.</div>
+          <div id="tip-signature" class="tooltip-box">🚩 <strong>Fake authority:</strong> A signature block is easy to forge. Validate headers, domains, and context.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Quick check</div>
+        <h2>Test your knowledge</h2>
+        <div class="quiz-q">
+          <div class="q-text">1. What is the first thing you should check when receiving a security alert email?</div>
+          <div class="quiz-options" id="q1-opts">
+            <button class="quiz-opt" onclick="answer(this, 'q1', false)"><span class="opt-letter">A</span> Read only the email body</button>
+            <button class="quiz-opt" onclick="answer(this, 'q1', false)"><span class="opt-letter">B</span> Click the verification link</button>
+            <button class="quiz-opt" onclick="answer(this, 'q1', true)"><span class="opt-letter">C</span> Inspect the sender's full email domain</button>
+            <button class="quiz-opt" onclick="answer(this, 'q1', false)"><span class="opt-letter">D</span> Reply to ask if it is legitimate</button>
+          </div>
+          <div class="quiz-feedback" id="q1-fb"></div>
+        </div>
+        <div class="quiz-q">
+          <div class="q-text">2. An urgent email asks you to verify your account within 24 hours. What should you do?</div>
+          <div class="quiz-options" id="q2-opts">
+            <button class="quiz-opt" onclick="answer(this, 'q2', false)"><span class="opt-letter">A</span> Act quickly before the deadline</button>
+            <button class="quiz-opt" onclick="answer(this, 'q2', true)"><span class="opt-letter">B</span> Navigate directly to the official site</button>
+            <button class="quiz-opt" onclick="answer(this, 'q2', false)"><span class="opt-letter">C</span> Download any attached instructions</button>
+            <button class="quiz-opt" onclick="answer(this, 'q2', false)"><span class="opt-letter">D</span> Forward it to coworkers</button>
+          </div>
+          <div class="quiz-feedback" id="q2-fb"></div>
+        </div>
+        <div class="btn-row" id="emailModuleBtn" style="display:none;"><button class="btn btn-primary" onclick="completeModule(1)">✓ Mark Complete & Continue</button></div>
+      </div>
     </section>
-  </main>
+
+    <section class="module" id="module-sms">
+      <div class="phone-wrap"><div class="phone"><div class="phone-screen"><div class="phone-status"><span>9:41</span><span>●●●●● 5G 🔋</span></div><div class="sms-header"><div class="sms-from">Message from</div><div class="sms-name">+1 (800) 123-4567</div></div><div class="sms-messages"><div class="sms-bubble">🏦 ALERT: Your Example Bank account was temporarily locked. Verify immediately:<br><br><a href="#">http://bank-secure-verify.example/unlock</a><br><br>Failure within 2 hours will result in closure.</div><div class="sms-time">Today 9:38 AM</div></div></div></div></div>
+      <div class="card"><div class="card-label">Smishing red flags</div><h2>Why this is suspicious</h2><div class="flags-grid"><div class="flag-card"><div class="flag-icon">📱</div><div class="flag-title">Unknown number</div><div class="flag-desc">Unexpected texts from unrecognized numbers deserve extra scrutiny.</div></div><div class="flag-card"><div class="flag-icon">🔗</div><div class="flag-title">Suspicious link</div><div class="flag-desc">The domain is not the institution's known domain and uses pressure language.</div></div><div class="flag-card warn"><div class="flag-icon">⏱️</div><div class="flag-title">2-hour urgency</div><div class="flag-desc">Artificial time pressure tries to bypass careful verification.</div></div><div class="flag-card safe"><div class="flag-icon">🛡️</div><div class="flag-title">What to do</div><div class="flag-desc">Open the official app, call the number on the card, or report the SMS to your provider.</div></div></div><div class="btn-row"><button class="btn btn-primary" onclick="completeModule(2)">✓ Mark Complete & Continue</button></div></div>
+    </section>
+
+    <section class="module" id="module-qr">
+      <div class="qr-scene"><div class="qr-poster"><div class="qr-title">📶 Free Wi‑Fi<br>Scan to Connect!</div><div class="qr-code" id="qrGrid"></div><div class="qr-sub">Lobby Network<br>No password required</div></div></div>
+      <div class="card"><div class="card-label">What happens when you scan</div><h2>The QR trap revealed</h2><p style="margin-bottom:16px;">This innocent-looking QR code points to a suspicious destination:</p><div class="url-bar" style="border-radius:8px; padding:12px 16px; border-color:var(--accent2); margin-bottom:24px;"><span class="lock">🔓</span><span>http://free-wifi-hotel-portal.example/login?redirect=capture</span></div><div class="flags-grid"><div class="flag-card"><div class="flag-icon">👁️</div><div class="flag-title">QR codes hide URLs</div><div class="flag-desc">You cannot judge the destination until your device previews it.</div></div><div class="flag-card warn"><div class="flag-icon">🖨️</div><div class="flag-title">Physical tampering</div><div class="flag-desc">Attackers can paste malicious QR stickers over legitimate ones.</div></div><div class="flag-card safe"><div class="flag-icon">📱</div><div class="flag-title">Preview before opening</div><div class="flag-desc">Read the full URL preview before tapping Open.</div></div><div class="flag-card safe"><div class="flag-icon">🔒</div><div class="flag-title">Ask staff</div><div class="flag-desc">Ask for the official Wi‑Fi network and avoid entering credentials on unexpected captive portals.</div></div></div><div style="margin-top:32px;"><div class="card-label">Final challenge</div><h2 style="margin-bottom:20px;">What would you do?</h2><div class="quiz-q"><div class="q-text">A coffee shop QR preview shows <code style="color:var(--accent2); font-family:var(--font-mono);">http://coffee-wifi-free.example/login</code>. What do you do?</div><div class="quiz-options" id="q3-opts"><button class="quiz-opt" onclick="answer(this, 'q3', false)"><span class="opt-letter">A</span> Tap Open because it mentions coffee</button><button class="quiz-opt" onclick="answer(this, 'q3', true)"><span class="opt-letter">B</span> Do not open it; verify the official network with staff</button><button class="quiz-opt" onclick="answer(this, 'q3', false)"><span class="opt-letter">C</span> Open it but enter no passwords</button><button class="quiz-opt" onclick="answer(this, 'q3', false)"><span class="opt-letter">D</span> It is fine because the camera scanned it</button></div><div class="quiz-feedback" id="q3-fb"></div></div></div><div class="btn-row" id="qrModuleBtn" style="display:none;"><button class="btn btn-primary" onclick="completeModule(3)">✓ Complete All Modules!</button></div></div>
+    </section>
+
+    <section class="module" id="module-score">
+      <div class="completion-banner" id="completionBanner"><div class="big-emoji">🏆</div><h2>Training complete</h2><p>You reviewed common phishing, smishing, and QR-code lures.</p></div>
+      <div class="score-ring-wrap"><div class="score-ring"><svg width="140" height="140" viewBox="0 0 140 140"><circle class="ring-bg" cx="70" cy="70" r="54"/><circle class="ring-fill" id="ringFill" cx="70" cy="70" r="54"/></svg><div class="score-center"><div class="score-num" id="scoreNum">0%</div><div class="score-label">Score</div></div></div></div>
+      <div class="stats-row"><div class="stat-box"><div class="stat-val" id="statModules">0/4</div><div class="stat-lbl">Modules Done</div></div><div class="stat-box"><div class="stat-val" id="statQuiz">0/3</div><div class="stat-lbl">Quiz Correct</div></div><div class="stat-box"><div class="stat-val" id="statTime">—</div><div class="stat-lbl">Time Taken</div></div></div>
+      <div class="card-label" style="margin-top:8px;">Top Defenders — This Session</div><div id="leaderboard"></div><div class="btn-row"><button class="btn btn-primary" onclick="restartAll()">↺ Restart Training</button></div>
+    </section>
+  </div>
 
   <script>
-    const form = document.getElementById('demoForm');
-    const result = document.getElementById('result');
+    const modules = [...document.querySelectorAll('.module')];
+    const tabs = [...document.querySelectorAll('.tab')];
+    const completed = new Set();
+    const quizCorrect = new Set();
+    const startTime = Date.now();
+    let difficulty = 'easy';
+    const leaders = [
+      { name: 'Blue Team Ada', score: 98, time: '04:10' },
+      { name: 'SOC Morgan', score: 92, time: '05:32' },
+      { name: 'You', score: 0, time: '—', you: true }
+    ];
 
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
+    function showModule(index) {
+      modules.forEach((module, i) => module.classList.toggle('active', i === index));
+      tabs.forEach((tab, i) => tab.classList.toggle('active', i === index));
+      updateScore();
+    }
 
-      const email = document.getElementById('email').value.trim();
-      const passwordLength = document.getElementById('password').value.length;
+    function setDiff(button, level) {
+      difficulty = level;
+      document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      const urls = {
+        easy: 'http://accounts-cloud-secure.login-verify.example/signin',
+        medium: 'https://cloudsuite.accounts-login.example/session',
+        hard: 'https://accounts.cloudsuite.example.login-security.example/sso'
+      };
+      document.getElementById('urlText').textContent = urls[level];
+      document.getElementById('lockIcon').textContent = level === 'easy' ? '🔓' : '🔒';
+    }
 
-      if (!email || passwordLength === 0) {
-        return;
-      }
+    function goPasswordStep() {
+      const email = document.getElementById('demo-email').value.trim() || 'learner@example.test';
+      document.getElementById('emailDisplay').textContent = email;
+      document.getElementById('avatarLetter').textContent = email[0].toUpperCase();
+      document.getElementById('login-step1').style.display = 'none';
+      document.getElementById('login-step2').style.display = 'block';
+    }
 
+    async function submitSafeDemo() {
+      const email = document.getElementById('demo-email').value.trim() || 'learner@example.test';
+      const passwordLength = document.getElementById('demo-password').value.length;
+      if (passwordLength === 0) return;
       await fetch('/report-demo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, passwordLength }),
+        body: JSON.stringify({ email, passwordLength, difficulty })
       });
+      document.getElementById('t-email').textContent = maskIdentifier(email);
+      document.getElementById('t-length').textContent = `${passwordLength} characters`;
+      document.getElementById('t-time').textContent = new Date().toLocaleTimeString();
+      document.getElementById('terminal').classList.add('show');
+      document.getElementById('flagSection').style.display = 'block';
+      document.querySelectorAll('#flagSection .flag-card').forEach((card, i) => setTimeout(() => card.classList.add('visible'), i * 120));
+      document.getElementById('demo-password').value = '';
+    }
 
-      form.reset();
-      result.style.display = 'block';
-    });
+    function maskIdentifier(value) {
+      const [local, domain] = String(value).split('@');
+      if (!domain) return local.length > 2 ? `${local[0]}***${local.at(-1)}` : '***';
+      return `${local[0] || '*'}***${local.at(-1) || '*'}@${domain}`;
+    }
+
+    function resetLogin() {
+      document.getElementById('demo-email').value = '';
+      document.getElementById('demo-password').value = '';
+      document.getElementById('login-step1').style.display = 'block';
+      document.getElementById('login-step2').style.display = 'none';
+      document.getElementById('terminal').classList.remove('show');
+      document.getElementById('flagSection').style.display = 'none';
+    }
+
+    function showTip(id) {
+      document.querySelectorAll('.tooltip-box').forEach(box => box.classList.remove('show'));
+      document.getElementById(`tip-${id}`).classList.add('show');
+    }
+
+    function answer(button, question, correct) {
+      const group = document.getElementById(`${question}-opts`);
+      group.querySelectorAll('button').forEach(btn => { btn.disabled = true; });
+      button.classList.add(correct ? 'correct' : 'wrong');
+      const feedback = document.getElementById(`${question}-fb`);
+      feedback.className = `quiz-feedback show ${correct ? 'ok' : 'bad'}`;
+      feedback.textContent = correct ? 'Correct — verify independently before interacting.' : 'Not quite — slow down and validate the source, domain, and context.';
+      if (correct) quizCorrect.add(question);
+      if (quizCorrect.has('q1') && quizCorrect.has('q2')) document.getElementById('emailModuleBtn').style.display = 'flex';
+      if (quizCorrect.has('q3')) document.getElementById('qrModuleBtn').style.display = 'flex';
+      updateScore();
+    }
+
+    function completeModule(index) {
+      completed.add(index);
+      tabs[index].classList.add('done');
+      if (completed.size === 4) {
+        showModule(4);
+        document.getElementById('completionBanner').classList.add('show');
+      } else {
+        showModule(Math.min(index + 1, 4));
+      }
+      updateScore();
+    }
+
+    function updateScore() {
+      const moduleScore = (completed.size / 4) * 70;
+      const quizScore = (quizCorrect.size / 3) * 30;
+      const score = Math.round(moduleScore + quizScore);
+      document.getElementById('progressFill').style.width = `${completed.size * 25}%`;
+      document.getElementById('progressLabel').textContent = `${completed.size} / 4 complete`;
+      document.getElementById('statModules').textContent = `${completed.size}/4`;
+      document.getElementById('statQuiz').textContent = `${quizCorrect.size}/3`;
+      document.getElementById('scoreNum').textContent = `${score}%`;
+      document.getElementById('ringFill').style.strokeDashoffset = 339.3 - (339.3 * score / 100);
+      const elapsed = Math.max(1, Math.floor((Date.now() - startTime) / 1000));
+      const formatted = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`;
+      document.getElementById('statTime').textContent = formatted;
+      leaders[2].score = score;
+      leaders[2].time = formatted;
+      renderLeaderboard();
+    }
+
+    function renderLeaderboard() {
+      const board = document.getElementById('leaderboard');
+      const sorted = [...leaders].sort((a, b) => b.score - a.score);
+      board.innerHTML = sorted.map((entry, i) => `<div class="lb-row ${entry.you ? 'you' : ''}"><div class="lb-rank">#${i + 1}</div><div class="lb-name">${entry.name}</div><div class="lb-score">${entry.score}%</div><div class="lb-time">${entry.time}</div></div>`).join('');
+    }
+
+    function restartAll() { window.location.reload(); }
+
+    function makeQr() {
+      const pattern = [1,1,1,0,1,1,1,1,0,1,0,1,0,1,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1,1,0,0,1,0,1,1,0,1,1,0,1,0,1,1,1,0,1,0,1];
+      document.getElementById('qrGrid').innerHTML = pattern.map(bit => `<div class="qr-pixel ${bit ? 'on' : 'off'}"></div>`).join('');
+    }
+
+    makeQr();
+    updateScore();
+    setInterval(updateScore, 1000);
   </script>
 </body>
 </html>
