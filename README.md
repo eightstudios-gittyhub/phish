@@ -8,13 +8,13 @@ This lab intentionally avoids copying a real login page and does **not** capture
 
 - How phishing pages pressure users into entering sensitive information.
 - Which clues help reveal a fake login flow, including suspicious URLs, poor context, and unexpected prompts.
+- How to spot email urgency tactics, smishing links, and QR-code traps.
 - Why defenders should avoid collecting real credentials during awareness training.
 - How phishing-resistant MFA, password managers, and reporting workflows reduce risk.
 
 ## Run Locally
 
 ```bash
-npm install
 npm start
 ```
 
@@ -26,7 +26,7 @@ Open <http://localhost:3000> in your browser.
 phish-lab/
 ├── public/
 │   └── index.html     # Safe awareness page
-├── server.js          # Express server that discards password data
+├── server.js          # Dependency-free Node server that discards password data
 ├── package.json
 └── README.md
 ```
@@ -36,4 +36,5 @@ phish-lab/
 - The browser sends only a training identifier and password length to the server.
 - The server logs a masked identifier and explicitly reports that password data was discarded.
 - The UI warns learners not to enter real passwords.
-- The page uses generic training branding instead of impersonating a real service.
+- The page uses generic training branding and `.example` training domains instead of impersonating a real service.
+- Interactive scenarios cover login-page inspection, suspicious emails, SMS lures, QR-code previews, and a local-only score summary.
